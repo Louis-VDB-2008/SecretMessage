@@ -12,10 +12,22 @@ struct BmpInfo
     std::size_t stride = 0;
 };
 
-void inspect_pixels(const std::vector<std::uint8_t>& data, const BmpInfo& info);
 
 std::vector<std::uint8_t> ReadBinaryFile(const std::string& path);
 
 void WriteBinaryFile(const std::string& path, const std::vector<std::uint8_t>& data);
 
 void ValidateBMPHeader(const std::vector<std::uint8_t>& data);
+
+// Extrait uniquement les composantes B, G, R utiles (sans en-tête ni padding)
+std::vector<std::uint8_t> extract_pixel_components(
+	const std::vector<std::uint8_t>& bmp_data,       // Le buffer BMP complet (data)
+	const BmpInfo& info                              // Les informations sur l'image BMP (largeur, hauteur, offset des pixels, stride)
+);
+
+// Réinjecte les composantes modifiées dans le buffer BMP
+void apply_pixel_components(
+    std::vector<std::uint8_t>& bmp_data,
+    const BmpInfo& info,
+    const std::vector<std::uint8_t>& modified_components
+);

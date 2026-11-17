@@ -23,7 +23,7 @@ std::vector<std::uint8_t> ReadBinaryFile(const std::string& path)  //lire le fic
 	std::size_t file_size = static_cast<std::size_t>(end_pos);          // Convertir la taille en std::size_t
     file.seekg(0, std::ios::beg);                                       //debut
 
-    std::vector<std::uint8_t> buffer(file_size);
+	std::vector<std::uint8_t> buffer(file_size);                        //créer un vecteur de uint8_t de la taille du fichier pour stocker les données lues
 	file.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(file_size)); //static_cast pour convertir la taille du vecteur en std::streamsize, reinterpret_cast pour convertir le pointeur de uint8_t en pointeur de char
 
 	if (file.gcount() != static_cast<std::streamsize>(file_size))                               //gcount() retourne le nombre d'octets effectivement lus. Si ce nombre est différent de la taille du fichier, cela signifie que la lecture n'a pas été complète.
@@ -35,7 +35,7 @@ std::vector<std::uint8_t> ReadBinaryFile(const std::string& path)  //lire le fic
 }
 
 
-void WriteBinaryFile(const std::string& path, const std::vector<std::uint8_t>& data)         //écrire le fichier
+void WriteBinaryFile(const std::string& path, const std::vector<std::uint8_t>& data)
 {
     std::ofstream file(path, std::ios::binary);
     if (!file.is_open())
@@ -101,11 +101,11 @@ BmpInfo validate_bmp_header(const std::vector<std::uint8_t>& data)
 
 	if (declared_size != data.size())   //on verifie tout les champs de l'en-tête BMP
     {
-        throw std::runtime_error("Taille declaree incoherente avec la taille reelle du fichier.");
+        throw std::runtime_error("Taille incoherente avec la taille reelle du fichier.");
     }
     if (dib_header_size != 40)
     {
-        throw std::runtime_error("En-tete DIB non supporte (taille attendue : 40 octets).");
+        throw std::runtime_error("En-tete DIB non supporte");
     }
     if (width <= 0 || height <= 0)
     {
@@ -154,9 +154,46 @@ BmpInfo validate_bmp_header(const std::vector<std::uint8_t>& data)
 }
 
 
-void inspect_pixels(const std::vector<std::uint8_t>& data, const BmpInfo& info)  //data est le vecteur contenant les données du fichier BMP, info contient les informations sur l'image BMP (largeur, hauteur, offset des pixels, stride)
+
+
+std::vector<std::uint8_t> extract_pixel_color(
+    const std::vector<std::uint8_t>& bmp_data,
+    const BmpInfo& info)
 {
-    std::size_t component_count = 0;
+    std::vector<std::uint8_t> color;
+	color.reserve(info.width * info.height * 3);  //.reserve() alloue de la mémoire pour le vecteur color afin d'éviter les reallocations lors de l'ajout des composantes couleur.
+
+    for (std::size_t row = 0; row < info.height; ++row)
+    {
+        for (std::size_t column = 0; column < info.width; ++column)
+        {
+			for (std::size_t channel = 0; channel < 3; ++channel)  //on récupère l'index de chaque composante couleur pour chaque pixel et on les ajoute au vecteur components
+            {
+                std::size_t index =
+                    info.pixel_offset +
+					row * info.stride +         //on skip le padding en utilisant le stride pour accéder directement aux pixels
+                    column * 3 +
+                    channel;
+
+                color.push_back(bmp_data[index]);
+            }
+        }
+    }
+
+    return color;
+}
+
+void apply_pixel_changes(
+    std::vector<std::uint8_t>& bmp_data,
+    const BmpInfo& info,
+    const std::vector<std::uint8_t>& modified_components)
+{
+    if (modified_components.size() != info.width * info.height * 3)
+    {
+        throw std::runtime_error("Le nombre de composantes couleur ne correspond pas a l'image originale.");
+    }
+
+    std::size_t comp_index = 0;
 
     for (std::size_t row = 0; row < info.height; ++row)
     {
@@ -170,22 +207,8 @@ void inspect_pixels(const std::vector<std::uint8_t>& data, const BmpInfo& info) 
                     column * 3 +
                     channel;
 
-                // Lecture de la composante (0 = B, 1 = G, 2 = R)
-                std::uint8_t component = data[index];
-                //(void)component;
-
-                ++component_count;
+                bmp_data[index] = modified_components[comp_index++];
             }
         }
     }
-
-    // Affichage des composantes BGR du tout premier pixel stocké
-    std::size_t first_pixel = info.pixel_offset;
-    std::cout << "Premier pixel stocke (BGR) : "
-        << "B=" << +data[first_pixel + 0] << ", "
-        << "G=" << +data[first_pixel + 1] << ", "
-        << "R=" << +data[first_pixel + 2] << '\n';
-
-    std::cout << "Composantes utiles parcourues : " << component_count
-        << " (attendu : " << info.width * info.height * 3 << ")\n";
 }
