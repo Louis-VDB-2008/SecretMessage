@@ -7,6 +7,8 @@
 #include "XOR.h"
 #include "Image.h"
 
+std::vector<std::uint8_t> bmp_data;
+
 
 int CommandLine::MinimumArguments(int argc, char** argv)
 {
@@ -64,7 +66,7 @@ int CommandLine::ImageFileCheck(int argc, char** argv)
 		std::cerr << "Failed to open file\n";
 		return 0;
 	}
-	//BmpInfo info = ValidateBMPHeader(bmp_data); // a remetre une fois merge
+	ValidateBMPHeader(bmp_data);
 
 	return 1;
 }
@@ -102,32 +104,32 @@ int CommandLine::CommandMessage(int argc, char** argv)
 	return 1;
 }
 
-int CommandLine::CommandCheck(int argc, char** argv)
+bool CommandLine::CommandCheck(int argc, char** argv) // ca marche pas, je sais pas pourquoi, voir plus tard
 {
 	if (MinimumArguments(argc, argv) == 0)
 	{
-		return 0;
+		return false;
 	}
 	if (CommandChoice(argc, argv) == 0)
 	{
-		return 0;
+		return false;
 	}
 	if (ImageFileCheck(argc, argv) == 0)
 	{
-		return 0;
+		return false;
 	}
 	if (CommandKey(argc, argv) == 0)
 	{
-		return 0;
+		return false;
 	}
 	if (CommandChoice(argc, argv) == 1)
 	{
 		if (CommandMessage(argc, argv) == 0)
 		{
-			return 0;
+			return false;
 		}
 	}
-	return 1;
+	return true;
 }
 
 
@@ -143,9 +145,8 @@ void CommandLine::CommandEncode(int argc, char** argv)
 		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key);
 		std::cout << "Encoded message: " << MessageEncoded[i] << std::endl;
 	}
-	std::vector<std::uint8_t> color; //= Image::extract_pixel_color(bmp_data*); // a remetre une fois que l'on a merge
-	ModifPixels(color, MessageEncoded);
-	// Image::apply_pixel_changes(bmp_data*, BmpInfo & info, modified_components*); // a remetre une fois que l'on a merge
+	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info); // peut être enlevé info
+	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded));
 }
 
 std::vector<std::uint8_t> ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded)
@@ -174,7 +175,7 @@ void CommandLine::CommandDecode(int argc, char** argv)
 	std::string key = argv[3];
 
 
-	std::vector<std::uint8_t> color; //= Image::extract_pixel_color(bmp_data*); // a remetre une fois que l'on a merge
+	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info); // peut être enlevé info
 	std::vector<std::uint8_t> MessageEncoded = { ReadMessage(color) };
 
 	std::vector<uint8_t> MessageDecoded;
@@ -199,9 +200,8 @@ std::vector<std::uint8_t>ReadMessage(const std::vector<std::uint8_t>& color)
 }
 void CommandLine::CommandGo(int argc, char** argv)
 {
-	std::vector<std::uint8_t> bmp_data = ReadBinaryFile(argv[2]);
-	//inspect_pixels(bmp_data, info); // a rementre une fois que l'on a merge
-	if (CommandCheck(argc, argv) == 0)
+	bmp_data = ReadBinaryFile(argv[2]);
+	if (CommandCheck(argc, argv) == false)
 	{
 		return;
 	}

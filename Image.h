@@ -31,3 +31,12 @@ void apply_pixel_components(
     const BmpInfo& info,
     const std::vector<std::uint8_t>& modified_components
 );
+
+std::vector<std::uint8_t> extract_pixel_color(
+    const std::vector<std::uint8_t>& bmp_data,
+    const BmpInfo& info);
+
+void apply_pixel_changes(
+    std::vector<std::uint8_t>& bmp_data,
+    const BmpInfo& info,
+    const std::vector<std::uint8_t>& modified_components);
