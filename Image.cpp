@@ -78,7 +78,7 @@ namespace
 }
 
 
-void ValidateBMPHeader(const std::vector<std::uint8_t>& data)                                                   //data est le vecteur contenant les octets du fichier BMP
+BmpInfo validate_bmp_header(const std::vector<std::uint8_t>& data)
 {
     if (data.size() < 54)
     {
@@ -96,7 +96,7 @@ void ValidateBMPHeader(const std::vector<std::uint8_t>& data)                   
 	std::int32_t  width = ReadInt32LE(data, 18);            //18 à 21 : largeur de l'image en pixels (entier signé 32 bits)
 	std::int32_t  height = ReadInt32LE(data, 22);           //22 à 25 : hauteur de l'image en pixels (entier signé 32 bits)
 	std::uint16_t planes = ReadUInt16LE(data, 26);          //26 à 27 : nombre de plans de couleur (doit être 1)
-	std::uint16_t bits_per_pixel = ReadUInt16LE(data, 28);  //28 à 29 : nombre de bits par pixel (doit être 24 pour un BMP 24 bits)
+	std::uint16_t bits_par_pixel = ReadUInt16LE(data, 28);  //28 à 29 : nombre de bits par pixel (doit être 24 pour un BMP 24 bits)
 	std::uint32_t compression = ReadUInt32LE(data, 30);     //30 à 33 : type de compression (doit être 0 pour un BMP non compressé)
 
 	if (declared_size != data.size())   //on verifie tout les champs de l'en-tête BMP
@@ -115,7 +115,7 @@ void ValidateBMPHeader(const std::vector<std::uint8_t>& data)                   
     {
         throw std::runtime_error("Nombre de plans invalide (attendu : 1).");
     }
-    if (bits_per_pixel != 24)
+    if (bits_par_pixel != 24)
     {
         throw std::runtime_error("Format non supporte : seul le BMP 24 bits est accepte.");
     }
@@ -128,9 +128,64 @@ void ValidateBMPHeader(const std::vector<std::uint8_t>& data)                   
         throw std::runtime_error("Offset des pixels invalide.");
     }
 
+    BmpInfo info;
+    info.width = static_cast<std::size_t>(width);
+    info.height = static_cast<std::size_t>(height);
+    info.pixel_offset = static_cast<std::size_t>(pixel_offset);
+    info.stride = (info.width * 3 + 3) / 4 * 4;
+
+	// Vérifier que le buffer est suffisant pour contenir toutes les données de pixels, en tenant compte du padding
+    std::size_t required_size = info.pixel_offset + info.height * info.stride;
+    if (data.size() < required_size)
+    {
+        throw std::runtime_error("Fichier incomplet");
+
+    }
+    std::size_t padding_bytes = info.stride - (info.width * 3);  //calcul du padding
+    
+    //pas obligatoire
     std::cout << "BMP valide !\n"
-        << "  Taille fichier   : " << declared_size << " octets\n"
-        << "  Offset pixels    : " << pixel_offset << "\n"
-        << "  Dimensions       : " << width << " x " << height << " pixels\n"
-        << "  Profondeur       : " << bits_per_pixel << " bits\n";
+        << "  Dimensions: " << info.width << " x " << info.height << " pixels\n"
+        << "  Offset pixels: " << info.pixel_offset << "\n"
+        << "  Stride: " << info.stride << " octets/ligne "
+        << "(dont " << padding_bytes << " octet(s) de padding)\n";
+
+	return info;  //retourne les infos du BMP en size_t
+}
+
+
+void inspect_pixels(const std::vector<std::uint8_t>& data, const BmpInfo& info)  //data est le vecteur contenant les données du fichier BMP, info contient les informations sur l'image BMP (largeur, hauteur, offset des pixels, stride)
+{
+    std::size_t component_count = 0;
+
+    for (std::size_t row = 0; row < info.height; ++row)
+    {
+        for (std::size_t column = 0; column < info.width; ++column)
+        {
+            for (std::size_t channel = 0; channel < 3; ++channel)
+            {
+                std::size_t index =
+                    info.pixel_offset +
+                    row * info.stride +
+                    column * 3 +
+                    channel;
+
+                // Lecture de la composante (0 = B, 1 = G, 2 = R)
+                std::uint8_t component = data[index];
+                //(void)component;
+
+                ++component_count;
+            }
+        }
+    }
+
+    // Affichage des composantes BGR du tout premier pixel stocké
+    std::size_t first_pixel = info.pixel_offset;
+    std::cout << "Premier pixel stocke (BGR) : "
+        << "B=" << +data[first_pixel + 0] << ", "
+        << "G=" << +data[first_pixel + 1] << ", "
+        << "R=" << +data[first_pixel + 2] << '\n';
+
+    std::cout << "Composantes utiles parcourues : " << component_count
+        << " (attendu : " << info.width * info.height * 3 << ")\n";
 }
