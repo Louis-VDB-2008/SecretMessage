@@ -29,7 +29,8 @@ std::vector<std::uint8_t> extract_pixel_components(
 void apply_pixel_components(
     std::vector<std::uint8_t>& bmp_data,
     const BmpInfo& info,
-    const std::vector<std::uint8_t>& modified_components
+    const std::vector<std::uint8_t>& modified_components,
+	const std::string& output_path
 );
 
 std::vector<std::uint8_t> extract_pixel_color(
