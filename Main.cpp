@@ -4,8 +4,11 @@
 #include <stdexcept>
 #include <string>
 #include <cstdint>
+#include <exception>
+#include <vector>
 
 #include "CommandLine.h"
+#include "Image.h"
 
 int main(int argc, char** argv)
 {
@@ -19,4 +22,5 @@ int main(int argc, char** argv)
 	
 	CommandLine commandLine; // créer une instance de la classe CommandLine
 	commandLine.CommandGo(argc, argv); // lance 
+    return 0;
 }
