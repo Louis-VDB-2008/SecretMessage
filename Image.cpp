@@ -154,8 +154,6 @@ BmpInfo validate_bmp_header(const std::vector<std::uint8_t>& data)
 }
 
 
-
-
 std::vector<std::uint8_t> extract_pixel_color(
     const std::vector<std::uint8_t>& bmp_data,
     const BmpInfo& info)
@@ -186,7 +184,8 @@ std::vector<std::uint8_t> extract_pixel_color(
 void apply_pixel_changes(
     std::vector<std::uint8_t>& bmp_data,
     const BmpInfo& info,
-    const std::vector<std::uint8_t>& modified_components)
+    const std::vector<std::uint8_t>& modified_components,
+    const std::string& output_path)
 {
     if (modified_components.size() != info.width * info.height * 3)
     {
@@ -211,4 +210,5 @@ void apply_pixel_changes(
             }
         }
     }
+	WriteBinaryFile(output_path, bmp_data);  //noveau fichier BMP avec les modifications appliquées
 }
