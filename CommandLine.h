@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+#include <vector>
 
 class CommandLine
 {
@@ -18,6 +20,6 @@ private:
 	std::vector<std::uint8_t>ReadMessage(const std::vector<std::uint8_t>& color);
 
 
-	int CommandCheck(int argc, char** argv); // Vérifie si les arguments sont valides
+	bool CommandCheck(int argc, char** argv); // Vérifie si les arguments sont valides
 };
 

@@ -17,7 +17,7 @@ std::vector<std::uint8_t> ReadBinaryFile(const std::string& path);
 
 void WriteBinaryFile(const std::string& path, const std::vector<std::uint8_t>& data);
 
-void ValidateBMPHeader(const std::vector<std::uint8_t>& data);
+BmpInfo validate_bmp_header(const std::vector<std::uint8_t>& data);
 
 // Extrait uniquement les composantes B, G, R utiles (sans en-tête ni padding)
 std::vector<std::uint8_t> extract_pixel_components(
@@ -40,4 +40,5 @@ std::vector<std::uint8_t> extract_pixel_color(
 void apply_pixel_changes(
     std::vector<std::uint8_t>& bmp_data,
     const BmpInfo& info,
-    const std::vector<std::uint8_t>& modified_components);
+    const std::vector<std::uint8_t>& modified_components,
+    const std::string& output_path);

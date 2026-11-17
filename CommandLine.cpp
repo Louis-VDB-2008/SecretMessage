@@ -8,6 +8,7 @@
 #include "Image.h"
 
 std::vector<std::uint8_t> bmp_data;
+BmpInfo info;
 
 
 int CommandLine::MinimumArguments(int argc, char** argv)
@@ -66,7 +67,7 @@ int CommandLine::ImageFileCheck(int argc, char** argv)
 		std::cerr << "Failed to open file\n";
 		return 0;
 	}
-	ValidateBMPHeader(bmp_data);
+	validate_bmp_header(bmp_data);
 
 	return 1;
 }
@@ -96,7 +97,8 @@ int CommandLine::CommandMessage(int argc, char** argv)
 		std::cerr << "Message is empty\n";
 		return 0;
 	}
-	if (message.size() > 255)
+	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info);
+	if (message.size() > color.size() / 8)
 	{
 		std::cerr << "Message is too long\n";
 		return 0;
@@ -104,7 +106,7 @@ int CommandLine::CommandMessage(int argc, char** argv)
 	return 1;
 }
 
-bool CommandLine::CommandCheck(int argc, char** argv) // ca marche pas, je sais pas pourquoi, voir plus tard
+bool CommandLine::CommandCheck(int argc, char** argv)
 {
 	if (MinimumArguments(argc, argv) == 0)
 	{
@@ -143,16 +145,16 @@ void CommandLine::CommandEncode(int argc, char** argv)
 	{
 		MesssageBinaire[i] = { static_cast<std::uint8_t>(message[i]) };  // Convertir le caractère en binaire
 		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key);
-		std::cout << "Encoded message: " << MessageEncoded[i] << std::endl;
 	}
-	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info); // peut être enlevé info
-	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded));
+	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info);
+	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded), "output.bmp");
 }
 
-std::vector<std::uint8_t> ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded)
+std::vector<std::uint8_t> CommandLine::ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded)
 {
 	int y = 0;
-	std::uint8_t octet = MessageEncoded[0];
+	int j = 0;
+	std::uint8_t octet = MessageEncoded[j];
 	for (int i = 0; i < color.size(); ++i)
 	{
 		std::uint8_t bit = (octet >> (7 - y)) & 0x01u;
@@ -160,7 +162,15 @@ std::vector<std::uint8_t> ModifPixels(std::vector<std::uint8_t> color, std::vect
 		if (y == 7)
 		{
 			y = 0;
-			octet = MessageEncoded[++y];
+			j++;
+			if (j >= MessageEncoded.size())
+			{
+				octet = 0;
+			}
+			else
+			{
+				octet = MessageEncoded[j];
+			}
 		}
 		else
 		{
@@ -175,7 +185,7 @@ void CommandLine::CommandDecode(int argc, char** argv)
 	std::string key = argv[3];
 
 
-	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info); // peut être enlevé info
+	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info);
 	std::vector<std::uint8_t> MessageEncoded = { ReadMessage(color) };
 
 	std::vector<uint8_t> MessageDecoded;
@@ -189,18 +199,31 @@ void CommandLine::CommandDecode(int argc, char** argv)
 
 	std::cout << "Decoded message: " << Message;
 }
-std::vector<std::uint8_t>ReadMessage(const std::vector<std::uint8_t>& color)
+std::vector<std::uint8_t>CommandLine::ReadMessage(const std::vector<std::uint8_t>& color)
 {
 	std::vector<std::uint8_t> MessageEncoded;
+	std::vector<std::uint8_t> MessageEncod;
+	int j = 0;
+	std::uint8_t BIT = 0;
 	for (int i = 0; i < color.size(); ++i)
 	{
-		MessageEncoded.push_back(color[i] & 1u);
+		j++;
+		BIT = static_cast<std::uint8_t>((BIT << 1) | color[i] & 1u);
+		if (j == 8)
+		{
+			MessageEncoded.push_back(BIT);
+			j = 0;
+			BIT = 0;
+		}
 	}
+	
 	return MessageEncoded;
 }
 void CommandLine::CommandGo(int argc, char** argv)
 {
 	bmp_data = ReadBinaryFile(argv[2]);
+	info = validate_bmp_header(bmp_data);
+
 	if (CommandCheck(argc, argv) == false)
 	{
 		return;
