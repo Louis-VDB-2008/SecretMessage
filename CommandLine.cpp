@@ -10,36 +10,36 @@
 
 int CommandLine::MinimumArguments(int argc, char** argv)
 {
-    if (argc < 2)
-    {
-        std::cerr << "Missing command\n";
-        return 0;
-    }
+	if (argc < 2)
+	{
+		std::cerr << "Missing command\n";
+		return 0;
+	}
 	return 1;
 }
 
 int CommandLine::CommandChoice(int argc, char** argv)
 {
-    std::string command = argv[1];
+	std::string command = argv[1];
 
-    if (command == "encode")
-    {
-        if (argc != 5)
-        {
-            std::cerr << "Invalid encode arguments\n";
-            return 0;
-        }
+	if (command == "encode")
+	{
+		if (argc != 5)
+		{
+			std::cerr << "Invalid encode arguments\n";
+			return 0;
+		}
 		return 1;
-    }
-    else if (command == "decode")
-    {
-        if (argc != 4)
-        {
-            std::cerr << "Invalid decode arguments\n";
-            return 0;
-        }
+	}
+	else if (command == "decode")
+	{
+		if (argc != 4)
+		{
+			std::cerr << "Invalid decode arguments\n";
+			return 0;
+		}
 		return 2;
-    }
+	}
 	else if (command == "help")
 	{
 		std::cout << "Usage:\n";
@@ -48,42 +48,42 @@ int CommandLine::CommandChoice(int argc, char** argv)
 		std::cout << "  help\n";
 		return 0;
 	}
-    else
-    {
-        std::cerr << "Unknown command\n";
-        return 0;
-    }
+	else
+	{
+		std::cerr << "Unknown command\n";
+		return 0;
+	}
 }
 
 int CommandLine::ImageFileCheck(int argc, char** argv)
 {
-    std::ifstream file(argv[2], std::ios::binary);
+	std::ifstream file(argv[2], std::ios::binary);
 
-    if (!file)
-    {
-        std::cerr << "Failed to open file\n";
-        return 0;
-    }
+	if (!file)
+	{
+		std::cerr << "Failed to open file\n";
+		return 0;
+	}
 	//BmpInfo info = ValidateBMPHeader(bmp_data); // a remetre une fois merge
 
-    return 1;
+	return 1;
 }
 
 int CommandLine::CommandKey(int argc, char** argv)
 {
-    std::string key = argv[3];
-    if (key.empty())
-    {
-        std::cerr << "Key is empty\n";
-        return 0;
-    }
+	std::string key = argv[3];
+	if (key.empty())
+	{
+		std::cerr << "Key is empty\n";
+		return 0;
+	}
 	int keyInt = std::stoi(key);
-    if (keyInt < 0 || keyInt >= 10)
-    {
-        std::cerr << "Invalid key\n";
-        return 0;
-    }
-    return 1;
+	if (keyInt < 0 || keyInt >= 10)
+	{
+		std::cerr << "Invalid key\n";
+		return 0;
+	}
+	return 1;
 }
 
 int CommandLine::CommandMessage(int argc, char** argv)
@@ -128,7 +128,7 @@ int CommandLine::CommandCheck(int argc, char** argv)
 		}
 	}
 	return 1;
- }
+}
 
 
 void CommandLine::CommandEncode(int argc, char** argv)
@@ -140,25 +140,46 @@ void CommandLine::CommandEncode(int argc, char** argv)
 	for (int i = 0; i < message.size(); ++i)
 	{
 		MesssageBinaire[i] = { static_cast<std::uint8_t>(message[i]) };  // Convertir le caractère en binaire
-		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key); // Encode le message en utilisant la clé
+		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key);
 		std::cout << "Encoded message: " << MessageEncoded[i] << std::endl;
 	}
-	// fonction pour recevoir les octets de couleur (dans un tableau) // Hugo
-	// fonction qui modifie les octets en parametre le tableau, le MesssageEncoded // Louis
-	// fonction qui envoye le tableau modifier pour creer un fichier image avec l'image modifiée // Hugo
+	std::vector<std::uint8_t> color; //= Image::extract_pixel_color(bmp_data*); // a remetre une fois que l'on a merge
+	ModifPixels(color, MessageEncoded);
+	// Image::apply_pixel_changes(bmp_data*, BmpInfo & info, modified_components*); // a remetre une fois que l'on a merge
+}
+
+std::vector<std::uint8_t> ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded)
+{
+	int y = 0;
+	std::uint8_t octet = MessageEncoded[0];
+	for (int i = 0; i < color.size(); ++i)
+	{
+		std::uint8_t bit = (octet >> (7 - y)) & 0x01u;
+		color[i] = (color[i] & 0xFEu) | bit;
+		if (y == 7)
+		{
+			y = 0;
+			octet = MessageEncoded[++y];
+		}
+		else
+		{
+			y++;
+		}
+	}
+	return color;
 }
 
 void CommandLine::CommandDecode(int argc, char** argv)
 {
 	std::string key = argv[3];
-	std::uint8_t MessageEncoded[] = { 0 };
 
-	// fonction pour recevoir les octets de couleur (dans un tableau) // Hugo
-	// MessageEncoded = {fonction pour lire le bit de pont faible et les assembler} // Louis
+
+	std::vector<std::uint8_t> color; //= Image::extract_pixel_color(bmp_data*); // a remetre une fois que l'on a merge
+	std::vector<std::uint8_t> MessageEncoded = { ReadMessage(color) };
 
 	std::vector<uint8_t> MessageDecoded;
 
-	for (int i = 0; i < sizeof(MessageEncoded); ++i)
+	for (int i = 0; i < MessageEncoded.size(); ++i)
 	{
 		MessageDecoded.push_back(XOR::EncodeDecode(MessageEncoded[i], key));
 	}
@@ -167,8 +188,15 @@ void CommandLine::CommandDecode(int argc, char** argv)
 
 	std::cout << "Decoded message: " << Message;
 }
-
-
+std::vector<std::uint8_t>ReadMessage(const std::vector<std::uint8_t>& color)
+{
+	std::vector<std::uint8_t> MessageEncoded;
+	for (int i = 0; i < color.size(); ++i)
+	{
+		MessageEncoded.push_back(color[i] & 1u);
+	}
+	return MessageEncoded;
+}
 void CommandLine::CommandGo(int argc, char** argv)
 {
 	std::vector<std::uint8_t> bmp_data = ReadBinaryFile(argv[2]);
@@ -190,3 +218,4 @@ void CommandLine::CommandGo(int argc, char** argv)
 		return;
 	}
 }
+
