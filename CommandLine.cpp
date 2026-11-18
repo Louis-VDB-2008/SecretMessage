@@ -28,7 +28,7 @@ int CommandLine::CommandChoice(int argc, char** argv)
 
 	if (command == "encode")
 	{
-		if (argc != 5)
+		if (argc != 6)
 		{
 			std::cerr << "Invalid encode arguments\n";
 			return 0;
@@ -79,12 +79,6 @@ int CommandLine::CommandKey(int argc, char** argv)
 	if (key.empty())
 	{
 		std::cerr << "Key is empty\n";
-		return 0;
-	}
-	int keyInt = std::stoi(key);
-	if (keyInt < 0 || keyInt >= 10)
-	{
-		std::cerr << "Invalid key\n";
 		return 0;
 	}
 	return 1;
@@ -148,7 +142,16 @@ void CommandLine::CommandEncode(int argc, char** argv)
 		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key);
 	}
 	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info);
-	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded, argv), "output.bmp");
+	const char* output;
+	if (argc < 6)
+	{
+		output = "output.bmp";
+	}
+	else
+	{
+		output = argv[5];
+	}
+	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded, argv), output);
 }
 
 std::vector<std::uint8_t> CommandLine::ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded, char** argv)
@@ -236,9 +239,11 @@ std::vector<std::uint8_t>CommandLine::ReadMessage(const std::vector<std::uint8_t
 }
 void CommandLine::CommandGo(int argc, char** argv)
 {
-	bmp_data = ReadBinaryFile(argv[2]);
-	info = validate_bmp_header(bmp_data);
-
+	if (argc > 2)
+	{
+		bmp_data = ReadBinaryFile(argv[2]);
+		info = validate_bmp_header(bmp_data);
+	}
 	if (CommandCheck(argc, argv) == false)
 	{
 		return;
