@@ -6,6 +6,7 @@
 #include "CommandLine.h"
 #include "XOR.h"
 #include "Image.h"
+#include <bitset>
 
 std::vector<std::uint8_t> bmp_data;
 BmpInfo info;
@@ -147,21 +148,23 @@ void CommandLine::CommandEncode(int argc, char** argv)
 		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key);
 	}
 	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info);
-	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded), "output.bmp");
+	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded, argv), "output.bmp");
 }
 
-std::vector<std::uint8_t> CommandLine::ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded)
+std::vector<std::uint8_t> CommandLine::ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded, char** argv)
 {
 	int y = 0;
 	int j = 0;
+	std::string key = argv[3];
 	std::uint8_t octet = MessageEncoded[j];
 	std::uint8_t MessageSize = MessageEncoded.size();
-	for (int i = 0; i < 7; i++)
+	std::cout << "Taille " << static_cast<int>(MessageSize) << " lettres\n";
+	for (int i = 0; i < 8; i++)
 	{
-		std::uint8_t bitSize = (octet >> (7 - i)) & 0x01u;
+		std::uint8_t bitSize = (MessageSize >> (7 - i)) & 0x01u;
 		color[i] = (color[i] & 0xFEu) | bitSize;
 	}
-	for (int i = 1; i < color.size(); ++i)
+	for (int i = 8; i < color.size(); ++i)
 	{
 		std::uint8_t bit = (octet >> (7 - y)) & 0x01u;
 		color[i] = (color[i] & 0xFEu) | bit;
@@ -211,7 +214,13 @@ std::vector<std::uint8_t>CommandLine::ReadMessage(const std::vector<std::uint8_t
 	std::vector<std::uint8_t> MessageEncod;
 	int j = 0;
 	std::uint8_t BIT = 0;
-	for (int i = 0; i < color.size(); ++i)
+	std::uint8_t BitSize = 0b00000000;
+	for (int i = 0; i < 8; i++)
+	{
+		BitSize = static_cast<std::uint8_t>((BitSize << 1) | color[i] & 1u);
+	}
+	std::cout << "Taille " << static_cast<int>(BitSize) << " lettres\n";
+	for (int i = 8; i < 8 + static_cast<int>(BitSize) * 8; ++i)
 	{
 		j++;
 		BIT = static_cast<std::uint8_t>((BIT << 1) | color[i] & 1u);

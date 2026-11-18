@@ -15,7 +15,7 @@ private:
 	int CommandMessage(int argc, char** argv); // Vérifie si le message est valide (non vide)
 
 	void CommandEncode(int argc, char** argv); // fonction pour encoder le message dans l'image
-	std::vector<std::uint8_t> ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded);
+	std::vector<std::uint8_t> ModifPixels(std::vector<std::uint8_t> color, std::vector<std::uint8_t> MessageEncoded, char** argv);
 	void CommandDecode(int argc, char** argv); // fonction pour décoder le message de l'image
 	std::vector<std::uint8_t>ReadMessage(const std::vector<std::uint8_t>& color);
 
