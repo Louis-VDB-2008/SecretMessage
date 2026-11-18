@@ -155,7 +155,13 @@ std::vector<std::uint8_t> CommandLine::ModifPixels(std::vector<std::uint8_t> col
 	int y = 0;
 	int j = 0;
 	std::uint8_t octet = MessageEncoded[j];
-	for (int i = 0; i < color.size(); ++i)
+	std::uint8_t MessageSize = MessageEncoded.size();
+	for (int i = 0; i < 7; i++)
+	{
+		std::uint8_t bitSize = (octet >> (7 - i)) & 0x01u;
+		color[i] = (color[i] & 0xFEu) | bitSize;
+	}
+	for (int i = 1; i < color.size(); ++i)
 	{
 		std::uint8_t bit = (octet >> (7 - y)) & 0x01u;
 		color[i] = (color[i] & 0xFEu) | bit;
