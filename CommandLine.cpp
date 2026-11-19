@@ -142,14 +142,14 @@ void CommandLine::CommandEncode(int argc, char** argv)
 		MessageEncoded[i] = XOR::EncodeDecode(MesssageBinaire[i], key);
 	}
 	std::vector<std::uint8_t> color = extract_pixel_color(bmp_data, info);
-	const char* output;
+	std::string output;
 	if (argc < 6)
 	{
 		output = "output.bmp";
 	}
 	else
 	{
-		output = argv[5];
+		output = argv[5] + std::string(".bmp");
 	}
 	apply_pixel_changes(bmp_data, info, ModifPixels(color, MessageEncoded, argv), output);
 }
