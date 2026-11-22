@@ -5,6 +5,7 @@
 Pour ce projet nous avons réalisé un programme capable de cacher et de récupérer un message dans une image.bmp
 
 ## Fonctionnement
+Taper dans le Windows poquerShell :  cd "C:\Users\Windows\Documents\Programation\Projet3\SecretMessage"
 Le programme possède deux modes :
 
 - **Encode** : cache un message dans une image et crée une image modifiée.
