@@ -1,56 +1,202 @@
+
 # SecretMessage
 
-## Présentation
+## Présentation du projet
 
-Pour ce projet nous avons réalisé un programme capable de cacher et de récupérer un message dans une image.bmp
+**SecretMessage** est un programme développé en C++ permettant de cacher et de récupérer un message dans une image au format BMP.
+
+Ce projet utilise la **stéganographie**, une technique qui consiste à dissimuler des informations dans un fichier, ainsi qu'une transformation XOR utilisant une clé.
+
+Le programme fonctionne depuis un terminal et propose deux commandes principales :
+
+- **Encode** : cacher un message dans une image BMP et créer une nouvelle image.
+- **Decode** : récupérer et afficher le message caché dans une image BMP.
+
+---
 
 ## Fonctionnement
-Taper dans le Windows poquerShell :  cd "C:\Users\Windows\Documents\Programation\Projet3\SecretMessage"
-Le programme possède deux modes :
 
-- **Encode** : cache un message dans une image et crée une image modifiée.
-- **Decode** : récupère le message caché dans une image et l'affiche dans la console.
+### Encodage
 
-### Encode
-Pour encoder l'image, le programme se base sur une ligne de commande du type:
-```bash
-working_directory path encode "image.bmp path" "key" "message to be encoded" "encode_image path"
+Lors de l'encodage, le programme :
+
+1. Récupère les arguments fournis dans la ligne de commande.
+2. Ouvre l'image BMP sélectionnée.
+3. Transforme le message à l'aide de la clé XOR.
+4. Insère les informations du message dans l'image.
+5. Enregistre une nouvelle image contenant le message caché.
+
+### Décodage
+
+Lors du décodage, le programme :
+
+1. Récupère le chemin de l'image encodée et la clé.
+2. Ouvre l'image BMP.
+3. Extrait les informations du message caché.
+4. Utilise la clé XOR pour retrouver le message original.
+5. Affiche le message dans la console.
+
+---
+
+
+## Utilisation
+
+Le programme s'utilise depuis un terminal Windows, notamment PowerShell.
+
+### Préparation du terminal
+
+Avant d'exécuter le programme, il est recommandé de se placer dans le dossier du projet.
+
+```powershell
+cd "C:\Chemin\Vers\SecretMessage"
 ```
-Cela créer une copie modifiée de l'image qui sera enregistrée dans le working directory.
 
-### Decode
-Pour décoder l'image, le programme se base sur une ligne de commande du type:
-```bash
-working_directory path decode "encoded_image.bmp path" "key"
+Cette commande modifie le **Working Directory**, c'est-à-dire le répertoire de travail du terminal.
+
+
+### Chemin de l'exécutable
+
+Dans les exemples suivants, `.\SecretMessage.exe` représente le chemin vers le fichier exécutable.
+
+- `.\` désigne le répertoire courant.
+- `SecretMessage.exe` est le nom du programme compilé.
+
+Si l'exécutable se trouve dans un sous-dossier, il faut préciser son chemin.
+
+Par exemple :
+
+```powershell
+.\x64\Debug\SecretMessage.exe help
 ```
-path_working_directory decode "encoded image.bmp path" key
-Ici, on va accéder à l'image encodée et en extraire le message afin de l'afficher
 
-## Problème majeur rencontré
-La fonction ReadMessage continuait de lire le message après que celui-ci soit terminé, affichant des centaines de caractères indésirables après le message.
-    ==> solution trouvée, encoder la taille du message dans l'image afin de récupérer l'information dans ReadMessage et ainsi l'arrêter à la fin du message.
+Il est également possible d'utiliser un chemin absolu :
 
+```powershell
+C:\Chemin\Vers\SecretMessage.exe help
+```
 
-## Verification
-  Test                                           Expected_Result                          Result
-right path_working_directory                programme read                             programme read
-wrong path_working_directory                void                                       ???
-no path_working_directory                   void                                       ???
-mode encode                                 create copie image with message            create copie image with message
-mmode decode                                read message on image                      read message on image
-wrong mode                                  error message                              error message "Unknown command"
-no mode                                     error message                              error message "Unknown command"
-right immage.bmp path                       read image                                 read image
-wrong image.bmp path                        error message                              error message "Failed to open file"
-if image was no .mbp                        error message                              error message "Signature invalide : ce fichier n'est pas un BMP ('BM')."
-if image was smolly 54 octet                error message                              "Fichier trop petit pour contenir un en-tete BMP valide."
-key in encode                               encoded the message                        encoded the message
-no key in encode                            error message                              error message "Key is empty"
-right key in decode                         message                                    message
-wrong key in decode                         crypted message                            crypted message
-message in encode                           create copie image with message            create copie image with message
-no message in encode                        error message                              error message "Message is empty"
-message more biggest for the imaage         error message                              error message "Message is too long"
-right encode image path in encode           create immage on the path                  create image on the path with the name was givd
-wrong encode image path in encode           create image on the Working directory      create image on the path of the working directory withe the name of output.bmp
-encode image path with no .bmp or other .   create image .bmp                          create image with the name was name.mpb or name.[...].mbp
+### Encoder un message
+
+**Syntaxe :**
+
+```powershell
+.\SecretMessage.exe encode "image.bmp" "key" "message" "output"
+```
+> "Image.bmp" est le nom de l'image et le type doit être bmp
+
+> Il est possible de le ranger l'image modifer dans un sous dossier "DossierImage\output" ou autre part "C:\Chemin\Vers\DossierImage\ImageModifier"
+
+**Exemple :**
+
+```powershell
+.\SecretMessage.exe encode "image.bmp" "azE 35" "Hello World" "encoded"
+```
+
+Cette commande crée une nouvelle image contenant le message caché.
+
+### Décoder un message
+
+**Syntaxe :**
+
+```powershell
+.\SecretMessage.exe decode "encoded.bmp" "key"
+```
+
+**Exemple :**
+
+```powershell
+.\SecretMessage.exe decode "encoded.bmp" "MyKey"
+```
+
+**Résultat attendu :**
+
+```text
+Decoded message: Hello World
+```
+
+## Organisation du projet
+
+| Module | Fonction |
+|---|---|
+| `CommandLine` | Gestion des arguments, des commandes et de l'affichage |
+| `XOR` | Transformation du message avec une clé |
+| `Image` | Lecture, modification et écriture des images BMP |
+
+---
+
+##  Difficulté majeure rencontrée
+
+### Problème de lecture du message
+
+Lors du développement, la fonction `ReadMessage` continuait à lire les données de l'image après la fin du message.
+
+Cela provoquait l'affichage de centaines de caractères indésirables après le message original.
+
+### Solution
+
+Nous avons décidé d'enregistrer également la **taille du message dans l'image**.
+
+Lors du décodage, le programme récupère cette information afin de connaître exactement le nombre de caractères à lire.
+
+Cette modification permet d'arrêter la lecture à la fin du message.
+
+---
+
+## Tests et vérifications
+
+Nous avons effectué différents tests afin de vérifier le fonctionnement du programme et sa gestion des erreurs.
+
+### Répertoire de travail et commandes
+
+| Test | Résultat attendu | Résultat obtenu |
+|---|---|---|
+| Répertoire de travail correct | Programme fonctionnel | Programme fonctionnel |
+| Répertoire de travail incorrect | Échec | Message d'erreur de PowerShell :  Le terme «...» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script ou programme exécutable |
+| Répertoire de travail non précisé | Échec | Message d'erreur de PowerShell :  Le terme «...» n'est pas reconnu comme nom d'applet de commande, fonction, fichier de script ou programme exécutable |
+| Commande `encode` | Création d'une image contenant le message | Conforme |
+| Commande `decode` | Lecture du message caché | Conforme |
+| Commande inconnue | Message d'erreur | `Unknown command` |
+| Aucune commande | Message d'erreur | `Unknown command` |
+
+### Gestion des images BMP
+
+| Test | Résultat attendu | Résultat obtenu |
+|---|---|---|
+| Chemin d'image correct | Lecture de l'image | Conforme |
+| Chemin d'image incorrect | Message d'erreur | `Failed to open file` |
+| Fichier non BMP | Message d'erreur | `Signature invalide : ce fichier n'est pas un BMP ('BM').` |
+| Image inférieure à 54 octets | Message d'erreur | `Fichier trop petit pour contenir un en-tete BMP valide.` |
+
+### Gestion des clés et des messages
+
+| Test | Résultat attendu | Résultat obtenu |
+|---|---|---|
+| Clé valide à l'encodage | Transformation du message | Conforme |
+| Clé absente à l'encodage | Message d'erreur | `Key is empty` |
+| Clé correcte au décodage | Message original | Conforme |
+| Clé incorrecte au décodage | Message illisible | Message illisible |
+| Message valide | Création de l'image encodée | Conforme |
+| Message vide | Message d'erreur | `Message is empty` |
+| Message trop long pour l'image | Message d'erreur | `Message is too long` |
+
+### Gestion de l'image de sortie
+
+| Test | Résultat attendu | Résultat obtenu |
+|---|---|---|
+| Chemin de sortie correct | Image créée à l'emplacement demandé | Conforme |
+| Chemin de sortie incorrect | Création dans le répertoire de travail avec le nom `output.bmp` | Comportement observé |
+
+---
+
+## Répartition du travail
+
+Ce projet a été réalisé en binôme.
+
+| Développeur | Modules réalisés | Responsabilités |
+|---|---|---|
+| **Louis** | `CommandLine`, `XOR` | Gestion des commandes, des arguments et de la transformation XOR |
+| **Hugo** | `Image` | Lecture, modification et sauvegarde des images BMP |
+
+Cette répartition nous a permis de développer séparément les différents modules du programme.
+
+---
